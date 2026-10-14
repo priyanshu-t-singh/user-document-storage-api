@@ -2,6 +2,8 @@ package com.priyanshu.user_document_storage_api.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,13 +14,21 @@ import com.priyanshu.user_document_storage_api.dto.PaginatedResponse;
 import com.priyanshu.user_document_storage_api.exception.StorageException;
 import com.priyanshu.user_document_storage_api.service.FileStorageService;
 import com.priyanshu.user_document_storage_api.service.search.FileSearchStrategy;
+import com.priyanshu.user_document_storage_api.exception.FileNotFoundException;
 
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +38,7 @@ import java.util.List;
 public class S3FileStorageService implements FileStorageService {
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     private final StorageProperties storageProperties;
     private final FileSearchStrategy searchStrategy;
 
@@ -96,20 +107,55 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public Resource downloadFile(String userName, String fileName) {
-        // TODO: Implement download functionality
-        throw new UnsupportedOperationException("Download functionality will be implemented");
+        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(storageProperties.getBucketName())
+                    .key(key)
+                    .build();
+
+            // S3 returns a ResponseInputStream. Wrapping it in InputStreamResource
+            // tells Spring to stream the bytes directly to the HTTP response.
+            ResponseInputStream<GetObjectResponse> s3ObjectStream = s3Client.getObject(getObjectRequest);
+            return new InputStreamResource(s3ObjectStream);
+
+        } catch (NoSuchKeyException e) {
+            log.error("File not found in S3: {}", key);
+            throw new FileNotFoundException("File not found: " + fileName);
+        } catch (SdkException e) {
+            log.error("Error downloading file from S3: {}", key, e);
+            throw new StorageException("Error downloading file", e);
+        }
+    }
+
+    @Override
+    public String getPresignedDownloadUrl(String userName, String fileName) {
+        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(storageProperties.getBucketName())
+                    .key(key)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(15)) // URL expires in 15 mins
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            return s3Presigner.presignGetObject(presignRequest).url().toString();
+
+        } catch (SdkException e) {
+            log.error("Error generating presigned URL for key: {}", key, e);
+            throw new StorageException("Error generating direct download link", e);
+        }
     }
 
     @Override
     public void uploadFile(String userName, MultipartFile file) {
         // TODO: Implement upload functionality
         throw new UnsupportedOperationException("Upload functionality will be implemented");
-    }
-
-    @Override
-    public String getPresignedDownloadUrl(String userName, String fileName) {
-        // TODO Implement presigned URL generation functionality
-        throw new UnsupportedOperationException("Presigned URL generation functionality will be implemented");
     }
 
 }

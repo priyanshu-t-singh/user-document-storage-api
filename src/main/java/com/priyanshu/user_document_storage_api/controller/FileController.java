@@ -1,5 +1,7 @@
 package com.priyanshu.user_document_storage_api.controller;
 
+import java.util.Map;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -58,6 +60,15 @@ public class FileController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
+    }
+
+    @GetMapping("/{fileName}/download-link")
+    public ResponseEntity<Map<String, String>> getPresignedUrl(
+            @PathVariable String userName,
+            @PathVariable String fileName) {
+
+        String url = fileStorageService.getPresignedDownloadUrl(userName, fileName);
+        return ResponseEntity.ok(Map.of("downloadUrl", url));
     }
 
 }
