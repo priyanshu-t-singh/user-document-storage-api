@@ -8,7 +8,5 @@ import java.util.List;
 @AllArgsConstructor
 public class PaginatedResponse<T> {
     private List<T> items;
-    private int pageNumber;
-    private int pageSize;
-    private int totalItems;
+    private String continuationToken;
 }

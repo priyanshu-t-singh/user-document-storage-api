@@ -41,10 +41,10 @@ public class FileController {
             @PathVariable String userName,
             @RequestParam String search,
             @RequestParam(defaultValue = "50") int pageSize,
-            @RequestParam(defaultValue = "1") int pageNumber) {
+            @RequestParam(required = false) String continuationToken) {
 
         return ResponseEntity.ok(
-                fileStorageService.searchFiles(userName, search, pageSize, pageNumber));
+                fileStorageService.searchFiles(userName, search, pageSize, continuationToken));
     }
 
     @GetMapping("/{fileName}/download")

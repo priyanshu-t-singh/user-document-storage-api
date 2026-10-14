@@ -8,7 +8,8 @@ import com.priyanshu.user_document_storage_api.dto.PaginatedResponse;
 
 public interface FileStorageService {
 
-    PaginatedResponse<FileMetadata> searchFiles(String userName, String searchTerm, int pageSize, int pageNumber);
+    PaginatedResponse<FileMetadata> searchFiles(String userName, String searchTerm, int pageSize,
+            String continuationToken);
 
     Resource downloadFile(String userName, String fileName);
 
