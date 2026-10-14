@@ -1,4 +1,4 @@
-package com.priyanshu.user_document_storage_api.service;
+package com.priyanshu.user_document_storage_api.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +10,7 @@ import com.priyanshu.user_document_storage_api.config.StorageProperties;
 import com.priyanshu.user_document_storage_api.dto.FileMetadata;
 import com.priyanshu.user_document_storage_api.dto.PaginatedResponse;
 import com.priyanshu.user_document_storage_api.exception.StorageException;
+import com.priyanshu.user_document_storage_api.service.FileStorageService;
 import com.priyanshu.user_document_storage_api.service.search.FileSearchStrategy;
 
 import software.amazon.awssdk.core.exception.SdkException;
@@ -103,6 +104,12 @@ public class S3FileStorageService implements FileStorageService {
     public void uploadFile(String userName, MultipartFile file) {
         // TODO: Implement upload functionality
         throw new UnsupportedOperationException("Upload functionality will be implemented");
+    }
+
+    @Override
+    public String getPresignedDownloadUrl(String userName, String fileName) {
+        // TODO Implement presigned URL generation functionality
+        throw new UnsupportedOperationException("Presigned URL generation functionality will be implemented");
     }
 
 }

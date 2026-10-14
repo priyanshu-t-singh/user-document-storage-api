@@ -13,6 +13,8 @@ public interface FileStorageService {
 
     Resource downloadFile(String userName, String fileName);
 
+    String getPresignedDownloadUrl(String userName, String fileName);
+
     void uploadFile(String userName, MultipartFile file);
 
 }
