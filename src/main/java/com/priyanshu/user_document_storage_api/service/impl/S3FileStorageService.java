@@ -18,16 +18,19 @@ import com.priyanshu.user_document_storage_api.exception.FileNotFoundException;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,8 +157,45 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public void uploadFile(String userName, MultipartFile file) {
-        // TODO: Implement upload functionality
-        throw new UnsupportedOperationException("Upload functionality will be implemented");
+        String fileName = file.getOriginalFilename();
+
+        // Security check: prevent path traversal (e.g. "../")
+        validatePath(userName, fileName);
+
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Cannot upload an empty file.");
+        }
+
+        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(storageProperties.getBucketName())
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .contentLength(file.getSize())
+                    .build();
+
+            // Stream directly to S3
+            s3Client.putObject(putObjectRequest,
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+        } catch (IOException e) {
+            log.error("Failed to read file input stream for user {}", userName, e);
+            throw new StorageException("Failed to process file upload", e);
+        } catch (SdkException e) {
+            log.error("S3 error uploading file for user {}", userName, e);
+            throw new StorageException("Failed to store file in S3", e);
+        }
+    }
+
+    private void validatePath(String userName, String fileName) {
+        if (userName == null || userName.contains("..") || userName.contains("/") || userName.contains("\\")) {
+            throw new IllegalArgumentException("Invalid userName format. Path traversal characters are not allowed.");
+        }
+        if (fileName == null || fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
+            throw new IllegalArgumentException("Invalid fileName format. Path traversal characters are not allowed.");
+        }
     }
 
 }
