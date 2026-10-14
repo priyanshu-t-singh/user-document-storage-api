@@ -41,7 +41,7 @@ public class FileController {
     @GetMapping
     public ResponseEntity<PaginatedResponse<FileMetadata>> searchFiles(
             @PathVariable String userName,
-            @RequestParam String search,
+            @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "50") int pageSize,
             @RequestParam(required = false) String continuationToken) {
 
