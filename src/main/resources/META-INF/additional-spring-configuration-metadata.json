@@ -1,0 +1,14 @@
+{
+    "properties": [
+        {
+            "name": "storage.s3.bucket-name",
+            "type": "java.lang.String",
+            "description": "AWS S3 bucket name where user documents will be stored."
+        },
+        {
+            "name": "storage.s3.region",
+            "type": "java.lang.String",
+            "description": "AWS S3 region where the bucket is located."
+        }
+    ]
+}
