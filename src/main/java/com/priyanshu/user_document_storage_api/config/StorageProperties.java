@@ -10,4 +10,5 @@ import org.springframework.context.annotation.Configuration;
 public class StorageProperties {
     private String bucketName;
     private String region;
+    private String endpoint;
 }

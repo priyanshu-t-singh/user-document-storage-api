@@ -9,6 +9,11 @@
             "name": "storage.s3.region",
             "type": "java.lang.String",
             "description": "AWS S3 region where the bucket is located."
+        },
+        {
+            "name": "storage.s3.endpoint",
+            "type": "java.lang.String",
+            "description": "AWS S3 endpoint URL. This is useful for local development with tools like LocalStack."
         }
     ]
 }
