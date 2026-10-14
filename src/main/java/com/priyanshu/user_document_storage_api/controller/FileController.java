@@ -38,6 +38,16 @@ public class FileController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{fileName}/upload-link")
+    public ResponseEntity<Map<String, String>> getPresignedUploadUrl(
+            @PathVariable String userName,
+            @PathVariable String fileName,
+            @RequestParam(defaultValue = "application/octet-stream") String contentType) {
+
+        String url = fileStorageService.getPresignedUploadUrl(userName, fileName, contentType);
+        return ResponseEntity.ok(Map.of("uploadUrl", url));
+    }
+
     @GetMapping
     public ResponseEntity<PaginatedResponse<FileMetadata>> searchFiles(
             @PathVariable String userName,

@@ -17,4 +17,6 @@ public interface FileStorageService {
 
     void uploadFile(String userName, MultipartFile file);
 
+    String getPresignedUploadUrl(String userName, String fileName, String contentType);
+
 }

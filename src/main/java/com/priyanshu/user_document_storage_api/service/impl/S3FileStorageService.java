@@ -29,6 +29,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -118,8 +119,6 @@ public class S3FileStorageService implements FileStorageService {
                     .key(key)
                     .build();
 
-            // S3 returns a ResponseInputStream. Wrapping it in InputStreamResource
-            // tells Spring to stream the bytes directly to the HTTP response.
             ResponseInputStream<GetObjectResponse> s3ObjectStream = s3Client.getObject(getObjectRequest);
             return new InputStreamResource(s3ObjectStream);
 
@@ -158,8 +157,6 @@ public class S3FileStorageService implements FileStorageService {
     @Override
     public void uploadFile(String userName, MultipartFile file) {
         String fileName = file.getOriginalFilename();
-
-        // Security check: prevent path traversal (e.g. "../")
         validatePath(userName, fileName);
 
         if (file.isEmpty()) {
@@ -189,6 +186,33 @@ public class S3FileStorageService implements FileStorageService {
         }
     }
 
+    @Override
+    public String getPresignedUploadUrl(String userName, String fileName, String contentType) {
+        validatePath(userName, fileName);
+
+        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(storageProperties.getBucketName())
+                    .key(key)
+                    .contentType(contentType)
+                    .build();
+
+            PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(15))
+                    .putObjectRequest(putObjectRequest)
+                    .build();
+
+            return s3Presigner.presignPutObject(presignRequest).url().toString();
+
+        } catch (SdkException e) {
+            log.error("Error generating presigned upload URL for key: {}", key, e);
+            throw new StorageException("Error generating direct upload link", e);
+        }
+    }
+
+    // Security check: prevent path traversal (e.g. "../")
     private void validatePath(String userName, String fileName) {
         if (userName == null || userName.contains("..") || userName.contains("/") || userName.contains("\\")) {
             throw new IllegalArgumentException("Invalid userName format. Path traversal characters are not allowed.");
