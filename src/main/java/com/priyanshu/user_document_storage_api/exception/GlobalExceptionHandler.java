@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.priyanshu.user_document_storage_api.dto.ApiError;
 
@@ -43,6 +44,13 @@ public class GlobalExceptionHandler {
         log.error("Storage system error", ex);
         return buildErrorResponse(HttpStatus.BAD_GATEWAY, "Storage Error",
                 "An error occurred while communicating with the storage backend.");
+    }
+
+    // Handle no static resources found path
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("No resource found: {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
     }
 
     // Fallback for any unhandled exceptions
