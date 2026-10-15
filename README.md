@@ -12,7 +12,6 @@ A clean, extensible REST API that lets you search and download user files stored
 - [Running Locally](#running-locally)
 - [Configuration](#configuration)
 - [Tests](#tests)
-- [Trade-offs & Future Improvements](#trade-offs--future-improvements)
 
 ---
 
@@ -23,6 +22,7 @@ A clean, extensible REST API that lets you search and download user files stored
 ```
 src/main/java/com/priyanshu/user_document_storage_api/
 ├── config/
+│   ├── CacheConfig.java                       # Caffine (replace with redis)
 │   ├── S3Config.java                          # S3Client + S3Presigner beans
 │   ├── StorageProperties.java                 # @ConfigurationProperties (no hardcoding)
 │   └── SwaggerConfig.java                     # OpenAPI / Swagger setup
@@ -40,10 +40,12 @@ src/main/java/com/priyanshu/user_document_storage_api/
 │   ├── FileMetadata.java                      # name, sizeBytes, lastModified
 │   ├── PaginatedResponse.java                 # items + continuationToken
 │   └── ApiError.java                          # consistent error envelope
-└── exception/
-    ├── FileNotFoundException.java
-    ├── StorageException.java
-    └── GlobalExceptionHandler.java            # @RestControllerAdvice
+├── exception/
+│   ├── FileNotFoundException.java
+│   ├── StorageException.java
+│   └── GlobalExceptionHandler.java            # @RestControllerAdvice
+└── filter
+    └── RequestLoggingFilter.java              # Logs each Requests
 ```
 
 ### S3 Key Layout
@@ -73,11 +75,11 @@ FileController                 ← thin HTTP layer, no business logic
   ▼
 FileStorageService             ← interface (swappable backend)
   │
-  ├── S3FileStorageService     ← S3 implementation (default)
-  │     │
-  │     └── FileSearchStrategy ← interface (swappable algorithm)
-  │           │
-  │           └── ContainsIgnoreCaseSearchStrategy
+  └── S3FileStorageService     ← S3 implementation (default)
+        │
+        └── FileSearchStrategy ← interface (swappable algorithm)
+              │
+              └── ContainsIgnoreCaseSearchStrategy
 ```
 
 ---
