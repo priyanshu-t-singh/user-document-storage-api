@@ -1,15 +1,22 @@
 services:
   localstack:
-    container_name: "localstack-main"
+    container_name: localstack-main
     image: localstack/localstack-pro:latest
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
-      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      - SERVICES=s3
       - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
       - DEBUG=${DEBUG:-0}
       - PERSISTENCE=${PERSISTENCE:-0}
     volumes:
+      # Scripts in ready.d run automatically once LocalStack is ready
+      - "${PWD}/localstack-init:/etc/localstack/init/ready.d"
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "awslocal", "s3api", "head-bucket", "--bucket", "user-document-storage"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
