@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.info.Info;
         info = @Info( //
                 title = "User Document Storage API", //
                 description = "REST API for uploading, retrieving, and managing user documents securely.", //
-                version = "1.1.0", //
+                version = "1.2.1", //
                 contact = @Contact( //
                         name = "Priyanshu", //
                         email = "priyanshu-t@outlook.com" //
