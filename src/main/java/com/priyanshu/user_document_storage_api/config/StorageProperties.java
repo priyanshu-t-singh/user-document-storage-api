@@ -12,7 +12,7 @@ public class StorageProperties {
     private String region;
     private String endpoint;
     private String keyPrefix;
-    private Boolean pathStyleAccessEnabled;
+    private Boolean pathStyleAccess;
     private String accessKey;
     private String secretKey;
 }

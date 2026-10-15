@@ -32,8 +32,7 @@ public class S3Config {
 
         // LocalStack: custom endpoint + static dummy credentials
         if (StringUtils.hasText(storageProperties.getEndpoint())) {
-            builder.endpointOverride(URI.create(storageProperties.getEndpoint()))
-                    .forcePathStyle(true);
+            builder.endpointOverride(URI.create(storageProperties.getEndpoint()));
         }
 
         return builder.build();
@@ -41,17 +40,16 @@ public class S3Config {
 
     @Bean
     public S3Presigner s3Presigner() {
-        var presigner = S3Presigner.builder()
+        var builder = S3Presigner.builder()
                 .region(Region.of(storageProperties.getRegion()))
                 .credentialsProvider(getCredentialsProvider())
                 .serviceConfiguration(getS3Configuration());
 
         if (StringUtils.hasText(storageProperties.getEndpoint())) {
-            presigner.endpointOverride(URI.create(storageProperties.getEndpoint()))
-                    .serviceConfiguration(getS3Configuration());
+            builder.endpointOverride(URI.create(storageProperties.getEndpoint()));
         }
 
-        return presigner.build();
+        return builder.build();
     }
 
     private AwsCredentialsProvider getCredentialsProvider() {
@@ -67,7 +65,7 @@ public class S3Config {
 
     private S3Configuration getS3Configuration() {
         return S3Configuration.builder()
-                .pathStyleAccessEnabled(storageProperties.getPathStyleAccessEnabled())
+                .pathStyleAccessEnabled(storageProperties.getPathStyleAccess())
                 .build();
     }
 
