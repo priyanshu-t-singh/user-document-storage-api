@@ -66,7 +66,8 @@ class FileControllerTest {
         when(fileStorageService.downloadFile("sandy", "report.pdf"))
                 .thenReturn(resource);
 
-        mockMvc.perform(get("/api/v1/users/sandy/files/report.pdf/download"))
+        mockMvc.perform(get("/api/v1/users/sandy/files/download")
+                .param("fileName", "report.pdf"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
@@ -82,9 +83,10 @@ class FileControllerTest {
         when(fileStorageService.getPresignedDownloadUrl("sandy", "report.pdf"))
                 .thenReturn(fakeAwsUrl);
 
-        mockMvc.perform(get("/api/v1/users/sandy/files/report.pdf/download-link"))
+        mockMvc.perform(get("/api/v1/users/sandy/files/download-link")
+                .param("fileName", "report.pdf"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.downloadUrl").value(fakeAwsUrl));
+                .andExpect(jsonPath("$.url").value(fakeAwsUrl));
     }
 
     // 4. Test Multipart Upload Endpoint
@@ -111,7 +113,8 @@ class FileControllerTest {
         when(fileStorageService.getPresignedUploadUrl("sandy", "report.pdf", "application/pdf"))
                 .thenReturn(fakeAwsUrl);
 
-        mockMvc.perform(get("/api/v1/users/sandy/files/report.pdf/upload-link")
+        mockMvc.perform(get("/api/v1/users/sandy/files/upload-link")
+                .param("fileName", "report.pdf")
                 .param("contentType", "application/pdf"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uploadUrl").value(fakeAwsUrl));
@@ -123,7 +126,8 @@ class FileControllerTest {
         when(fileStorageService.downloadFile("sandy", "missing.pdf"))
                 .thenThrow(new FileNotFoundException("File not found: missing.pdf"));
 
-        mockMvc.perform(get("/api/v1/users/sandy/files/missing.pdf/download"))
+        mockMvc.perform(get("/api/v1/users/sandy/files/download")
+                .param("fileName", "missing.pdf"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message").value("File not found: missing.pdf"))
@@ -138,7 +142,8 @@ class FileControllerTest {
                 .thenThrow(new IllegalArgumentException(
                         "Invalid fileName format. Path traversal characters are not allowed."));
 
-        mockMvc.perform(get("/api/v1/users/sandy/files/../secret.txt/upload-link")
+        mockMvc.perform(get("/api/v1/users/sandy/files/upload-link")
+                .param("fileName", "../secret.txt")
                 .param("contentType", "text/plain"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Bad Request"))

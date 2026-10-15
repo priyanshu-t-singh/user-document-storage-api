@@ -42,11 +42,11 @@ public class FileController {
     private record UploadResponse(String uploadUrl) {
     }
 
-    @GetMapping("/{fileName}/upload-link")
+    @GetMapping("/upload-link")
     @Operation(summary = "Get a presigned URL for uploading a file", description = "Generates a presigned URL that allows the client to upload a file directly to the storage without going through the server.")
     public ResponseEntity<UploadResponse> getPresignedUploadUrl(
             @PathVariable String userName,
-            @PathVariable String fileName,
+            @RequestParam String fileName,
             @RequestParam(defaultValue = "application/octet-stream") String contentType) {
 
         String url = fileStorageService.getPresignedUploadUrl(userName, fileName, contentType);
@@ -65,11 +65,11 @@ public class FileController {
                 fileStorageService.searchFiles(userName, search, pageSize, continuationToken));
     }
 
-    @GetMapping("/{fileName}/download")
+    @GetMapping("/download")
     @Operation(summary = "Download a file for a specific user", description = "Downloads a file from the storage for the specified user.")
     public ResponseEntity<Resource> downloadFile(
             @PathVariable String userName,
-            @PathVariable String fileName) {
+            @RequestParam String fileName) {
 
         Resource resource = fileStorageService.downloadFile(userName, fileName);
 
@@ -82,11 +82,11 @@ public class FileController {
     private record PresignedUrlResponse(String url) {
     }
 
-    @GetMapping("/{fileName}/download-link")
+    @GetMapping("/download-link")
     @Operation(summary = "Get a presigned URL for downloading a file", description = "Generates a presigned URL that allows the client to download a file directly from the storage without going through the server.")
     public ResponseEntity<PresignedUrlResponse> getPresignedUrl(
             @PathVariable String userName,
-            @PathVariable String fileName) {
+            @RequestParam String fileName) {
 
         String url = fileStorageService.getPresignedDownloadUrl(userName, fileName);
         return ResponseEntity.ok(new PresignedUrlResponse(url));
