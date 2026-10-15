@@ -46,8 +46,6 @@ public class S3FileStorageService implements FileStorageService {
     private final StorageProperties storageProperties;
     private final FileSearchStrategy searchStrategy;
 
-    private static final String USER_PREFIX_FORMAT = "users/%s/";
-
     @Override
     public PaginatedResponse<FileMetadata> searchFiles(
             String userName,
@@ -55,7 +53,7 @@ public class S3FileStorageService implements FileStorageService {
             int pageSize,
             String continuationToken) {
 
-        String prefix = String.format(USER_PREFIX_FORMAT, userName);
+        String prefix = String.format(storageProperties.getKeyPrefix() + "/%s/", userName);
         List<FileMetadata> matchedFiles = new ArrayList<>();
         String currentToken = continuationToken;
         boolean isTruncated;
@@ -111,7 +109,7 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public Resource downloadFile(String userName, String fileName) {
-        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+        String key = getS3Key(userName, fileName);
 
         try {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
@@ -133,7 +131,7 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public String getPresignedDownloadUrl(String userName, String fileName) {
-        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+        String key = getS3Key(userName, fileName);
 
         try {
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
@@ -163,7 +161,7 @@ public class S3FileStorageService implements FileStorageService {
             throw new IllegalArgumentException("Cannot upload an empty file.");
         }
 
-        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+        String key = getS3Key(userName, fileName);
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -190,7 +188,7 @@ public class S3FileStorageService implements FileStorageService {
     public String getPresignedUploadUrl(String userName, String fileName, String contentType) {
         validatePath(userName, fileName);
 
-        String key = String.format(USER_PREFIX_FORMAT, userName) + fileName;
+        String key = getS3Key(userName, fileName);
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -220,6 +218,10 @@ public class S3FileStorageService implements FileStorageService {
         if (fileName == null || fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
             throw new IllegalArgumentException("Invalid fileName format. Path traversal characters are not allowed.");
         }
+    }
+
+    private String getS3Key(String userName, String fileName) {
+        return String.format(storageProperties.getKeyPrefix() + "/%s/", userName) + fileName;
     }
 
 }
