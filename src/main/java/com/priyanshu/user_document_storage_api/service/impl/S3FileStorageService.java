@@ -53,7 +53,12 @@ public class S3FileStorageService implements FileStorageService {
             int pageSize,
             String continuationToken) {
 
-        String prefix = String.format(storageProperties.getKeyPrefix() + "/%s/", userName);
+        String prefix = storageProperties.getKeyPrefix();
+        if (prefix.endsWith("/")) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+        prefix = String.format(prefix + "/%s/", userName);
+
         List<FileMetadata> matchedFiles = new ArrayList<>();
         String currentToken = continuationToken;
         boolean isTruncated;
@@ -155,8 +160,6 @@ public class S3FileStorageService implements FileStorageService {
     @Override
     public void uploadFile(String userName, MultipartFile file) {
         String fileName = file.getOriginalFilename();
-        validatePath(userName, fileName);
-
         if (file.isEmpty()) {
             throw new IllegalArgumentException("Cannot upload an empty file.");
         }
@@ -186,8 +189,6 @@ public class S3FileStorageService implements FileStorageService {
 
     @Override
     public String getPresignedUploadUrl(String userName, String fileName, String contentType) {
-        validatePath(userName, fileName);
-
         String key = getS3Key(userName, fileName);
 
         try {
@@ -221,7 +222,14 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     private String getS3Key(String userName, String fileName) {
-        return String.format(storageProperties.getKeyPrefix() + "/%s/", userName) + fileName;
+        validatePath(userName, fileName);
+        String prefix = storageProperties.getKeyPrefix();
+
+        if (prefix.endsWith("/")) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+
+        return String.format(prefix + "/%s/", userName) + fileName;
     }
 
 }

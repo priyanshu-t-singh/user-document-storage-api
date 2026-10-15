@@ -28,13 +28,12 @@ public class S3Config {
         var builder = S3Client.builder()
                 .region(Region.of(storageProperties.getRegion()))
                 .credentialsProvider(getCredentialsProvider())
-                .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(storageProperties.getPathStyleAccessEnabled())
-                        .build());
+                .serviceConfiguration(getS3Configuration());
 
         // LocalStack: custom endpoint + static dummy credentials
         if (StringUtils.hasText(storageProperties.getEndpoint())) {
-            builder.endpointOverride(URI.create(storageProperties.getEndpoint()));
+            builder.endpointOverride(URI.create(storageProperties.getEndpoint()))
+                    .forcePathStyle(true);
         }
 
         return builder.build();
@@ -45,12 +44,11 @@ public class S3Config {
         var presigner = S3Presigner.builder()
                 .region(Region.of(storageProperties.getRegion()))
                 .credentialsProvider(getCredentialsProvider())
-                .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(storageProperties.getPathStyleAccessEnabled())
-                        .build());
+                .serviceConfiguration(getS3Configuration());
 
         if (StringUtils.hasText(storageProperties.getEndpoint())) {
-            presigner.endpointOverride(URI.create(storageProperties.getEndpoint()));
+            presigner.endpointOverride(URI.create(storageProperties.getEndpoint()))
+                    .serviceConfiguration(getS3Configuration());
         }
 
         return presigner.build();
@@ -65,6 +63,12 @@ public class S3Config {
         } else {
             return DefaultCredentialsProvider.create();
         }
+    }
+
+    private S3Configuration getS3Configuration() {
+        return S3Configuration.builder()
+                .pathStyleAccessEnabled(storageProperties.getPathStyleAccessEnabled())
+                .build();
     }
 
 }
