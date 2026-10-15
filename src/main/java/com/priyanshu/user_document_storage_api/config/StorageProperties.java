@@ -11,4 +11,8 @@ public class StorageProperties {
     private String bucketName;
     private String region;
     private String endpoint;
+    private String keyPrefix;
+    private Boolean pathStyleAccessEnabled;
+    private String accessKey;
+    private String secretKey;
 }

@@ -6,8 +6,11 @@ import java.net.URI;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -22,28 +25,46 @@ public class S3Config {
 
     @Bean
     public S3Client s3Client() {
-        return S3Client.builder()
+        var builder = S3Client.builder()
                 .region(Region.of(storageProperties.getRegion()))
-                .endpointOverride(URI.create(storageProperties.getEndpoint()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create("test-access-key", "test-secret-key")))
+                .credentialsProvider(getCredentialsProvider())
                 .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(true)
-                        .build())
-                .build();
+                        .pathStyleAccessEnabled(storageProperties.getPathStyleAccessEnabled())
+                        .build());
+
+        // LocalStack: custom endpoint + static dummy credentials
+        if (StringUtils.hasText(storageProperties.getEndpoint())) {
+            builder.endpointOverride(URI.create(storageProperties.getEndpoint()));
+        }
+
+        return builder.build();
     }
 
     @Bean
     public S3Presigner s3Presigner() {
-        return S3Presigner.builder()
+        var presigner = S3Presigner.builder()
                 .region(Region.of(storageProperties.getRegion()))
-                .endpointOverride(URI.create(storageProperties.getEndpoint()))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create("test-access-key", "test-secret-key")))
+                .credentialsProvider(getCredentialsProvider())
                 .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(true)
-                        .build())
-                .build();
+                        .pathStyleAccessEnabled(storageProperties.getPathStyleAccessEnabled())
+                        .build());
+
+        if (StringUtils.hasText(storageProperties.getEndpoint())) {
+            presigner.endpointOverride(URI.create(storageProperties.getEndpoint()));
+        }
+
+        return presigner.build();
+    }
+
+    private AwsCredentialsProvider getCredentialsProvider() {
+        if (StringUtils.hasText(storageProperties.getAccessKey())
+                && StringUtils.hasText(storageProperties.getSecretKey())) {
+            return StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(storageProperties.getAccessKey(),
+                            storageProperties.getSecretKey()));
+        } else {
+            return DefaultCredentialsProvider.create();
+        }
     }
 
 }

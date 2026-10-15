@@ -14,6 +14,26 @@
             "name": "storage.s3.endpoint",
             "type": "java.lang.String",
             "description": "AWS S3 endpoint URL. This is useful for local development with tools like LocalStack."
+        },
+        {
+            "name": "storage.s3.key-prefix",
+            "type": "java.lang.String",
+            "description": "A prefix to be added to all keys in the S3 bucket. This can be used to organize files within the bucket."
+        },
+        {
+            "name": "storage.s3.path-style-access",
+            "type": "java.lang.Boolean",
+            "description": "A boolean flag to enable or disable path-style access for S3. This is useful for local development with tools like LocalStack."
+        },
+        {
+            "name": "storage.s3.access-key",
+            "type": "java.lang.String",
+            "description": "AWS S3 access key for authentication. This is required if you are not using the default AWS credentials provider chain."
+        },
+        {
+            "name": "storage.s3.secret-key",
+            "type": "java.lang.String",
+            "description": "AWS S3 secret key for authentication. This is required if you are not using the default AWS credentials provider chain."
         }
     ]
 }
