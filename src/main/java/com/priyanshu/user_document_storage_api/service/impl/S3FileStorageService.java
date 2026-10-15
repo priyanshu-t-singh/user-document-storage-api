@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.priyanshu.user_document_storage_api.config.CacheConfig;
 import com.priyanshu.user_document_storage_api.config.StorageProperties;
 import com.priyanshu.user_document_storage_api.dto.FileMetadata;
 import com.priyanshu.user_document_storage_api.dto.PaginatedResponse;
@@ -15,6 +16,9 @@ import com.priyanshu.user_document_storage_api.exception.StorageException;
 import com.priyanshu.user_document_storage_api.service.FileStorageService;
 import com.priyanshu.user_document_storage_api.service.search.FileSearchStrategy;
 import com.priyanshu.user_document_storage_api.exception.FileNotFoundException;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -47,6 +51,10 @@ public class S3FileStorageService implements FileStorageService {
     private final FileSearchStrategy searchStrategy;
 
     @Override
+    @Cacheable(
+            value = CacheConfig.FILE_LIST_CACHE,
+            key = "#userName + ':' + #searchTerm + ':' + #pageSize",
+            condition = "#continuationToken == null || #continuationToken.isBlank()")
     public PaginatedResponse<FileMetadata> searchFiles(
             String userName,
             String searchTerm,
@@ -135,6 +143,7 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
+    @Cacheable(value = CacheConfig.PRESIGNED_DOWNLOAD_URL_CACHE, key = "#userName + ':' + #fileName")
     public String getPresignedDownloadUrl(String userName, String fileName) {
         String key = getS3Key(userName, fileName);
 
@@ -158,6 +167,7 @@ public class S3FileStorageService implements FileStorageService {
     }
 
     @Override
+    @CacheEvict(value = CacheConfig.FILE_LIST_CACHE, allEntries = true)
     public void uploadFile(String userName, MultipartFile file) {
         String fileName = file.getOriginalFilename();
         if (file.isEmpty()) {
