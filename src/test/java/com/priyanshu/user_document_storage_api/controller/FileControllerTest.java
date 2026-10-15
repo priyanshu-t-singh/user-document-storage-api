@@ -8,6 +8,7 @@ import com.priyanshu.user_document_storage_api.service.FileStorageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ActiveProfiles("test")
 @WebMvcTest({ FileController.class, GlobalExceptionHandler.class })
 class FileControllerTest {
 
@@ -67,7 +69,8 @@ class FileControllerTest {
         mockMvc.perform(get("/api/v1/users/sandy/files/report.pdf/download"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"report.pdf\""))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"report.pdf\""))
                 .andExpect(content().bytes(fileContent));
     }
 
