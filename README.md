@@ -78,8 +78,6 @@ FileStorageService             ← interface (swappable backend)
   │     └── FileSearchStrategy ← interface (swappable algorithm)
   │           │
   │           └── ContainsIgnoreCaseSearchStrategy
-  │
-  └── (GCSFileStorageService, LocalDiskFileStorageService, …) ← future
 ```
 
 ---
@@ -135,7 +133,7 @@ All S3 settings (`bucketName`, `region`, `endpoint`, `accessKey`, `secretKey`) a
 ## API Reference
 
 Base URL: `http://localhost:8080`  
-Swagger UI: [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html)
+Swagger UI: [`http://localhost:8080/swagger-ui/index.html`](http://localhost:8080/swagger-ui/index.html)
 
 ### Search Files
 
@@ -343,55 +341,6 @@ make test
 ./gradlew test
 ```
 
-### What's covered
-
-**`@WebMvcTest` — `FileControllerTest`** (7 cases)
-
-| # | Test | Assertion |
-|---|---|---|
-| 1 | Search returns paginated data | `200`, items + `continuationToken` |
-| 2 | Stream download returns file bytes | `200`, `Content-Disposition`, binary body |
-| 3 | Presigned download URL returned | `200`, URL in response body |
-| 4 | Multipart upload succeeds | `200` |
-| 5 | Presigned upload URL returned | `200`, URL in response body |
-| 6 | File not found → 404 | `404`, `ApiError` envelope |
-| 7 | Path traversal attempt → 400 | `400`, `ApiError` envelope |
-
-> The controller layer is tested in isolation with a mocked `FileStorageService`. The `GlobalExceptionHandler` is included in the slice so error responses are verified end-to-end.
-
-### Test Dependencies
-
-```groovy
-testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
-testImplementation 'org.testcontainers:localstack:1.21.3'
-```
-
-Testcontainers + LocalStack are on the classpath and ready for integration tests against a real (containerised) S3.
-
 ---
 
-## Trade-offs & Future Improvements
-
-### S3 Has No Native "Contains" Search
-
-S3's `ListObjectsV2` only supports **prefix filtering** server-side. A `search=logistics` query cannot be pushed down to S3 — the service must list all objects under `users/{userName}/` and filter client-side.
-
-**Current mitigation:** pagination keeps memory usage bounded; only one batch is held in memory at a time.
-
-**At scale:** for users with thousands of files, client-side filtering means multiple round trips. The fix is to maintain a metadata index:
-- **DynamoDB** — store `{userName, fileName, size, lastModified}` and query with a GSI.
-- **OpenSearch** — full-text search on filename and content.
-
-### Other Improvements
-
-| Area | Current | Improvement |
-|---|---|---|
-| **Auth** | None (no-auth per spec) | JWT / Cognito + per-user IAM prefix scoping |
-| **Rate limiting** | None | Spring Cloud Gateway or API Gateway throttling |
-| **Caching** | None | Caffeine short-lived cache on `listObjectsV2` responses |
-| **Upload validation** | Size + path traversal | MIME-type sniffing, virus scanning (ClamAV) |
-| **Observability** | SLF4J logs | Micrometer metrics + distributed tracing (OpenTelemetry) |
-| **Presigned URL expiry** | 15 min hardcoded | Configurable via `StorageProperties` |
-| **Multipart large uploads** | Single `putObject` | S3 multipart upload for files > 100 MB |
-| **File versioning** | Overwrite on same name | S3 versioning or content-addressable keys |
+[MIT LICENSE](./LICENSE)
