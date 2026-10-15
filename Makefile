@@ -26,7 +26,7 @@ setup: ## One-time prep (make init script executable)
 	chmod +x localstack-init/init-s3.sh
 
 up: setup ## Start LocalStack, create bucket and seed sample files
-	docker compose up -d --wait
+	docker compose up -d --wait localstack
 	@echo "LocalStack is ready at http://localhost:4566"
 
 down: ## Stop LocalStack (data kept)
